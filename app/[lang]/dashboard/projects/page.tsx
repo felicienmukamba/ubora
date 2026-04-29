@@ -2,12 +2,30 @@
 
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Upload, GitBranch, FileText, CheckSquare, ExternalLink, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Upload, GitBranch, FileText, CheckSquare, ExternalLink, Clock, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProgressRing } from "@/components/pedagogy/progress-ring";
 import { CalloutBox } from "@/components/pedagogy/callout-box";
+import { submitProject } from "@/lib/actions/communication";
+import { toast } from "sonner";
 
-const mockProjects = [
+interface SelfCheckItem {
+  id: string;
+  label: string;
+  checked: boolean;
+}
+
+interface Project {
+  id: string;
+  title: string;
+  course: string;
+  status: "DRAFT" | "SUBMITTED" | "GRADED";
+  deadline: string;
+  score?: number | null;
+  selfCheckItems: SelfCheckItem[];
+}
+
+const INITIAL_PROJECTS: Project[] = [
   {
     id: "p1",
     title: "Architecture Docker & Proxy Manager",
@@ -58,7 +76,46 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 };
 
 export default function ProjectsPage() {
+  const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
   const [expanded, setExpanded] = useState<string | null>("p1");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const toggleCheck = (projectId: string, itemId: string) => {
+    setProjects(prev => prev.map(p => {
+      if (p.id !== projectId) return p;
+      return {
+        ...p,
+        selfCheckItems: p.selfCheckItems.map(item => 
+          item.id === itemId ? { ...item, checked: !item.checked } : item
+        )
+      };
+    }));
+  };
+
+  const handleProjectSubmit = async (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+
+    const uncheckedCount = project.selfCheckItems.filter(i => !i.checked).length;
+    if (uncheckedCount > 0) {
+      toast.warning(`Il vous reste ${uncheckedCount} critères à cocher.`);
+      return;
+    }
+
+    setIsSubmitting(true);
+    // Note: In a real app, we would get the actual userId from the session
+    const result = await submitProject("demo-user-id", projectId, "https://github.com/demo/repo", [], JSON.stringify(project.selfCheckItems));
+
+    if (result.success) {
+      toast.success("Projet soumis avec succès !");
+      setProjects(prev => prev.map(p => 
+        p.id === projectId ? { ...p, status: "SUBMITTED" } : p
+      ));
+    } else {
+      toast.error("Échec de la soumission");
+    }
+    setIsSubmitting(false);
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -68,7 +125,7 @@ export default function ProjectsPage() {
       </header>
 
       <div className="space-y-6">
-        {mockProjects.map((project) => {
+        {projects.map((project) => {
           const isExpanded = expanded === project.id;
           const status = statusLabels[project.status];
           const checkedCount = project.selfCheckItems.filter((i) => i.checked).length;
@@ -105,12 +162,23 @@ export default function ProjectsPage() {
                     <h4 className="font-medium mb-3 flex items-center gap-2"><CheckSquare className="w-4 h-4 text-primary" /> Auto-évaluation ({checkedCount}/{totalChecks})</h4>
                     <div className="space-y-2">
                       {project.selfCheckItems.map((item) => (
-                        <label key={item.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-                          <div className={cn("h-5 w-5 rounded border flex items-center justify-center flex-shrink-0", item.checked ? "bg-primary border-primary text-primary-foreground" : "border-input")}>
+                        <button 
+                          key={item.id} 
+                          onClick={() => project.status === "DRAFT" && toggleCheck(project.id, item.id)}
+                          disabled={project.status !== "DRAFT"}
+                          className={cn(
+                            "w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-left",
+                            project.status === "DRAFT" ? "hover:bg-muted/50 cursor-pointer" : "cursor-default"
+                          )}
+                        >
+                          <div className={cn(
+                            "h-5 w-5 rounded border flex items-center justify-center flex-shrink-0 transition-all", 
+                            item.checked ? "bg-primary border-primary text-primary-foreground" : "border-input"
+                          )}>
                             {item.checked && <CheckSquare className="w-3 h-3" />}
                           </div>
-                          <span className={cn("text-sm", item.checked && "line-through text-muted-foreground")}>{item.label}</span>
-                        </label>
+                          <span className={cn("text-sm transition-all", item.checked && "line-through text-muted-foreground")}>{item.label}</span>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -130,7 +198,14 @@ export default function ProjectsPage() {
 
                       <div className="flex gap-3">
                         <Button variant="outline" className="gap-2 flex-1"><GitBranch className="w-4 h-4" /> Lier un repository GitHub</Button>
-                        <Button className="gap-2 flex-1"><FileText className="w-4 h-4" /> Soumettre le projet</Button>
+                        <Button 
+                          onClick={() => handleProjectSubmit(project.id)} 
+                          className="gap-2 flex-1"
+                          disabled={isSubmitting || checkedCount < totalChecks}
+                        >
+                          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                          Soumettre le projet
+                        </Button>
                       </div>
                     </div>
                   )}

@@ -14,14 +14,47 @@ const rubricCriteria = [
   { id: "r4", label: "Innovation : Solution créative au problème posé", maxScore: 5 },
 ];
 
+import { submitPeerReview } from "@/lib/actions/peer-review";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+
 export default function PeerReviewPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = use(params);
   const [scores, setScores] = useState<Record<string, number>>({});
   const [comment, setComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  // Simulated IDs for this demo. In a real app, these would come from the context/props.
+  const submissionId = "sub_demo_123";
+  const userId = "user_demo_456";
+  const revieweeId = "user_reviewee_789";
 
   const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
   const maxTotal = rubricCriteria.reduce((a, c) => a + c.maxScore, 0);
+
+  const handleSubmit = async () => {
+    if (Object.keys(scores).length < rubricCriteria.length) return;
+
+    setIsSubmitting(true);
+    const result = await submitPeerReview(
+      submissionId,
+      userId,
+      revieweeId,
+      JSON.stringify(scores),
+      totalScore,
+      maxTotal,
+      comment
+    );
+
+    if (result.success) {
+      toast.success("Évaluation soumise !");
+      setSubmitted(true);
+    } else {
+      toast.error("Échec de la soumission");
+    }
+    setIsSubmitting(false);
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-4xl">

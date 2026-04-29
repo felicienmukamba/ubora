@@ -5,16 +5,40 @@ import { cn } from "@/lib/utils";
 import { Play, Pause, Volume2, Maximize, FileEdit, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import { saveNote } from "@/lib/actions/learning";
+import { toast } from "sonner";
+
 interface CoursePlayerProps {
   title: string;
   videoUrl: string;
+  userId?: string;
+  lessonId?: string;
   className?: string;
 }
 
-export function CoursePlayer({ title, videoUrl, className }: CoursePlayerProps) {
+export function CoursePlayer({ title, videoUrl, userId, lessonId, className }: CoursePlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
+  const [noteContent, setNoteContent] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handleSaveNote = async () => {
+    if (!userId || !lessonId || !noteContent.trim()) return;
+    
+    setIsSaving(true);
+    const timestamp = videoRef.current ? Math.floor(videoRef.current.currentTime) : undefined;
+    
+    const result = await saveNote(userId, lessonId, noteContent, timestamp);
+    
+    if (result.success) {
+      toast.success("Note enregistrée");
+      setNoteContent("");
+    } else {
+      toast.error("Échec de l'enregistrement");
+    }
+    setIsSaving(false);
+  };
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -87,13 +111,31 @@ export function CoursePlayer({ title, videoUrl, className }: CoursePlayerProps) 
           </div>
           <div className="p-4 flex-1 overflow-y-auto space-y-4 text-sm">
             <div className="p-3 bg-primary/5 border border-primary/10 rounded-lg">
-              <span className="text-xs font-mono text-primary font-bold cursor-pointer hover:underline">02:15</span>
+              <span className="text-xs font-mono text-primary font-bold cursor-pointer hover:underline">
+                {videoRef.current ? Math.floor(videoRef.current.currentTime) : "00:00"}
+              </span>
               <p className="mt-1 text-muted-foreground">Ne pas oublier de lier le proxy au réseau de la BDD seulement si nécessaire.</p>
             </div>
-            <textarea 
-              placeholder="Prenez vos notes ici. Elles sont synchronisées avec la vidéo..."
-              className="w-full h-32 bg-transparent border-none resize-none focus:ring-0 text-sm"
-            />
+            <div className="space-y-3">
+              <textarea 
+                placeholder="Prenez vos notes ici. Elles sont synchronisées avec la vidéo..."
+                value={noteContent}
+                onChange={(e) => setNoteContent(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                    handleSaveNote();
+                  }
+                }}
+                className="w-full h-32 bg-transparent border rounded-lg p-3 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none"
+              />
+              <Button 
+                onClick={handleSaveNote} 
+                className="w-full h-9 text-xs" 
+                disabled={isSaving || !noteContent.trim()}
+              >
+                {isSaving ? "Enregistrement..." : "Enregistrer la note (Ctrl+Entrée)"}
+              </Button>
+            </div>
           </div>
         </div>
       )}

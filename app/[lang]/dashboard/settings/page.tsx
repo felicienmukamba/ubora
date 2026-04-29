@@ -5,8 +5,16 @@ import { User, Bell, Shield, Moon, Sun, Globe, Key, Eye, EyeOff } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+import { useTheme } from "next-themes";
+
 export default function SettingsPage() {
-  const [darkMode, setDarkMode] = useState(true);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+  
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [notifications, setNotifications] = useState({
     email: true,
     push: true,
@@ -15,6 +23,11 @@ export default function SettingsPage() {
     projectDeadline: true,
   });
   const [twoFA, setTwoFA] = useState(false);
+
+  const isDark = theme === "dark";
+  const toggleTheme = () => setTheme(isDark ? "light" : "dark");
+
+  if (!mounted) return null;
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-3xl">
@@ -93,17 +106,17 @@ export default function SettingsPage() {
         <div className="p-6 space-y-4">
           <label className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
             <div className="flex items-center gap-3">
-              {darkMode ? <Moon className="w-5 h-5 text-purple-400" /> : <Sun className="w-5 h-5 text-yellow-500" />}
+              {isDark ? <Moon className="w-5 h-5 text-purple-400" /> : <Sun className="w-5 h-5 text-yellow-500" />}
               <div>
                 <p className="text-sm font-medium">Mode Sombre</p>
                 <p className="text-xs text-muted-foreground">Réduit la fatigue oculaire lors des sessions de nuit.</p>
               </div>
             </div>
             <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={cn("relative inline-flex h-6 w-11 items-center rounded-full transition-colors", darkMode ? "bg-primary" : "bg-muted")}
+              onClick={toggleTheme}
+              className={cn("relative inline-flex h-6 w-11 items-center rounded-full transition-colors", isDark ? "bg-primary" : "bg-muted")}
             >
-              <span className={cn("inline-block h-4 w-4 rounded-full bg-white transition-transform shadow-sm", darkMode ? "translate-x-6" : "translate-x-1")} />
+              <span className={cn("inline-block h-4 w-4 rounded-full bg-white transition-transform shadow-sm", isDark ? "translate-x-6" : "translate-x-1")} />
             </button>
           </label>
         </div>

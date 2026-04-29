@@ -6,6 +6,9 @@ import { Send, Bot, Paperclip, Mic, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+import { sendMessage } from "@/lib/actions/communication";
+import { toast } from "sonner";
+
 interface Message {
   id: string;
   sender: "user" | "mentor" | "bot";
@@ -15,7 +18,7 @@ interface Message {
   isAnnotated?: boolean;
 }
 
-export function ThreadedChat({ className }: { className?: string }) {
+export function ThreadedChat({ userId, threadId, className }: { userId?: string, threadId?: string, className?: string }) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -47,17 +50,31 @@ export function ThreadedChat({ className }: { className?: string }) {
     }
   ]);
   const [input, setInput] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
-    setMessages([...messages, {
+
+    const optimisticMessage: Message = {
       id: Date.now().toString(),
       sender: "user",
       name: "Apprenant",
       text: input,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }]);
+    };
+
+    setMessages(prev => [...prev, optimisticMessage]);
     setInput("");
+
+    if (userId && threadId) {
+      setIsSending(true);
+      const result = await sendMessage(userId, threadId, input);
+      if (!result.success) {
+        toast.error("Erreur d'envoi");
+        // Optional: remove optimistic message or show error state
+      }
+      setIsSending(false);
+    }
   };
 
   return (

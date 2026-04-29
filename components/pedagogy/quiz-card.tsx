@@ -6,6 +6,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, XCircle, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import { submitQuizAnswer } from "@/lib/actions/learning";
+import { toast } from "sonner";
+
 interface QuizOption {
   id: string;
   label: string;
@@ -15,6 +18,8 @@ interface QuizCardProps {
   question: string;
   options: QuizOption[];
   correctOptionId: string;
+  userId?: string;
+  questionId?: string;
   explanation?: string;
   onSuccess?: () => void;
   className?: string;
@@ -24,21 +29,38 @@ export function QuizCard({
   question,
   options,
   correctOptionId,
+  userId,
+  questionId,
   explanation,
   onSuccess,
   className,
 }: QuizCardProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isCorrect = selectedId === correctOptionId;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedId) return;
+
+    if (userId && questionId) {
+      setIsSubmitting(true);
+      const index = options.findIndex(o => o.id === selectedId);
+      const result = await submitQuizAnswer(userId, questionId, index);
+      
+      if (!result.success) {
+        toast.error("Erreur lors de la validation");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     setIsSubmitted(true);
     if (selectedId === correctOptionId && onSuccess) {
       onSuccess();
     }
+    setIsSubmitting(false);
   };
 
   return (
@@ -77,9 +99,9 @@ export function QuizCard({
           <Button 
             className="w-full mt-4" 
             onClick={handleSubmit} 
-            disabled={!selectedId}
+            disabled={!selectedId || isSubmitting}
           >
-            Valider la réponse
+            {isSubmitting ? "Validation..." : "Valider la réponse"}
           </Button>
         ) : (
           <AnimatePresence>
