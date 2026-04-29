@@ -1,0 +1,413 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════════════════════
+// ENUMS
+// ═══════════════════════════════════════════════════════
+
+enum Role {
+  STUDENT
+  MENTOR
+  ADMIN
+  RECRUITER
+}
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  GRADED
+  REVISION_REQUESTED
+}
+
+enum SessionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum NotificationType {
+  SESSION_REMINDER
+  PROJECT_DEADLINE
+  MENTOR_NUDGE
+  SOS_ALERT
+  GRADE_RECEIVED
+  MESSAGE_RECEIVED
+  CERTIFICATE_ISSUED
+  SYSTEM
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+// ═══════════════════════════════════════════════════════
+// USER & AUTH
+// ═══════════════════════════════════════════════════════
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  name            String?
+  image           String?
+  password        String?   // Hashed password (bcrypt)
+  emailVerified   DateTime?
+  role            Role      @default(STUDENT)
+  bio             String?
+  specialties     String[]  // e.g. ["Docker", "AWS", "Next.js"]
+  timezone        String?   @default("Europe/Paris")
+  lastActiveAt    DateTime?
+  twoFactorEnabled Boolean  @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Student relations
+  enrollments         Enrollment[]
+  progresses          Progress[]
+  submissions         ProjectSubmission[]
+  certificates        Certificate[]
+  menteeSessions      MentoringSession[]     @relation("MenteeSessions")
+  notes               Note[]
+  peerReviewsGiven    PeerReview[]           @relation("PeerReviewer")
+  peerReviewsReceived PeerReview[]           @relation("PeerReviewee")
+
+  // Mentor relations
+  mentorSessions      MentoringSession[]     @relation("MentorSessions")
+  feedbacksGiven      Feedback[]             @relation("FeedbackAuthor")
+  availabilities      MentorAvailability[]
+  instructedCourses   Course[]               @relation("CourseInstructor")
+
+  // Communication
+  messages            Message[]
+  notifications       Notification[]
+
+  // Admin
+  activityLogs        ActivityLog[]
+}
+
+// ═══════════════════════════════════════════════════════
+// COURSES & LEARNING
+// ═══════════════════════════════════════════════════════
+
+model Course {
+  id            String      @id @default(cuid())
+  title         String
+  slug          String      @unique
+  description   String?
+  thumbnail     String?
+  level         CourseLevel @default(BEGINNER)
+  technologies  String[]
+  duration      Int?        // Total estimated minutes
+  isPublished   Boolean     @default(false)
+  rating        Float?      @default(0)
+  studentsCount Int         @default(0)
+  instructorId  String
+  instructor    User        @relation("CourseInstructor", fields: [instructorId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  modules     Module[]
+  enrollments Enrollment[]
+  projects    Project[]
+}
+
+model Module {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  order       Int
+  courseId     String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  lessons     Lesson[]
+  threads     MessageThread[]
+}
+
+model Lesson {
+  id            String   @id @default(cuid())
+  title         String
+  content       String?  // Markdown or HTML
+  videoUrl      String?
+  videoDuration Int?     // seconds
+  duration      Int?     // estimated reading time in minutes
+  order         Int
+  moduleId      String
+  module        Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  progresses    Progress[]
+  notes         Note[]
+  quizzes       Quiz[]
+}
+
+model Progress {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId      String
+  lesson        Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  isCompleted   Boolean  @default(false)
+  lastPosition  Int?     // Video timestamp in seconds for resume
+  completedAt   DateTime?
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, lessonId])
+}
+
+model Enrollment {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId     String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrolledAt  DateTime @default(now())
+
+  @@unique([userId, courseId])
+}
+
+// ═══════════════════════════════════════════════════════
+// QUIZZES
+// ═══════════════════════════════════════════════════════
+
+model Quiz {
+  id          String   @id @default(cuid())
+  lessonId    String
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  order       Int      @default(0)
+
+  questions   QuizQuestion[]
+}
+
+model QuizQuestion {
+  id              String   @id @default(cuid())
+  quizId          String
+  quiz            Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  question        String
+  options         String[] // Array of possible answers
+  correctOptionIndex Int   // Index of the correct answer
+  explanation     String?  // Shown after answer
+  order           Int      @default(0)
+
+  answers         QuizAnswer[]
+}
+
+model QuizAnswer {
+  id            String       @id @default(cuid())
+  questionId    String
+  question      QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  userId        String
+  selectedIndex Int
+  isCorrect     Boolean
+  answeredAt    DateTime     @default(now())
+
+  @@unique([userId, questionId])
+}
+
+// ═══════════════════════════════════════════════════════
+// CONTEXTUAL NOTES (Bloc-notes synchronisé)
+// ═══════════════════════════════════════════════════════
+
+model Note {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId      String
+  lesson        Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  content       String   // Markdown
+  videoTimestamp Int?     // Synced video position in seconds
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ═══════════════════════════════════════════════════════
+// PROJECTS & EVALUATION
+// ═══════════════════════════════════════════════════════
+
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  rubric      String?  // JSON: evaluation criteria for peer review
+  deadline    DateTime?
+  courseId     String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  submissions ProjectSubmission[]
+  threads     MessageThread[]
+}
+
+model ProjectSubmission {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId   String
+  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  repoUrl     String?
+  fileUrls    String[]
+  selfCheckJson String?        // JSON: self-assessment checklist state
+  status      SubmissionStatus @default(DRAFT)
+  score       Float?
+  version     Int              @default(1)
+  submittedAt DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  feedbacks   Feedback[]
+  peerReviews PeerReview[]
+}
+
+model Feedback {
+  id            String   @id @default(cuid())
+  submissionId  String
+  submission    ProjectSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  authorId      String
+  author        User     @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  content       String
+  tasks         String[] // Actionable checklist items
+  createdAt     DateTime @default(now())
+}
+
+model PeerReview {
+  id            String   @id @default(cuid())
+  submissionId  String
+  submission    ProjectSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  reviewerId    String
+  reviewer      User     @relation("PeerReviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  revieweeId    String
+  reviewee      User     @relation("PeerReviewee", fields: [revieweeId], references: [id], onDelete: Cascade)
+  scoresJson    String   // JSON: { criterionId: score } mapping
+  totalScore    Float
+  maxScore      Float
+  comment       String?
+  createdAt     DateTime @default(now())
+
+  @@unique([submissionId, reviewerId])
+}
+
+// ═══════════════════════════════════════════════════════
+// MENTORING & MEETINGS
+// ═══════════════════════════════════════════════════════
+
+model MentorAvailability {
+  id          String   @id @default(cuid())
+  mentorId    String
+  mentor      User     @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+  dayOfWeek   Int      // 0=Sun, 1=Mon, ..., 6=Sat
+  startTime   String   // "09:00" (HH:mm)
+  endTime     String   // "18:00" (HH:mm)
+  isActive    Boolean  @default(true)
+}
+
+model MentoringSession {
+  id          String        @id @default(cuid())
+  mentorId    String
+  mentor      User          @relation("MentorSessions", fields: [mentorId], references: [id], onDelete: Cascade)
+  menteeId    String
+  mentee      User          @relation("MenteeSessions", fields: [menteeId], references: [id], onDelete: Cascade)
+  startTime   DateTime
+  endTime     DateTime
+  status      SessionStatus @default(SCHEDULED)
+  meetingUrl  String?
+  notes       String?       // Mentor's Session Debrief Report (SDR)
+  objectives  String[]      // Goals for the session
+  createdAt   DateTime      @default(now())
+
+  recordings  SessionRecording[]
+}
+
+model SessionRecording {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     MentoringSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  url         String
+  duration    Int?     // seconds
+  createdAt   DateTime @default(now())
+}
+
+// ═══════════════════════════════════════════════════════
+// CONTEXTUAL MESSAGING
+// ═══════════════════════════════════════════════════════
+
+model MessageThread {
+  id          String   @id @default(cuid())
+  title       String?
+  moduleId    String?
+  module      Module?  @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  isPinned    Boolean  @default(false)
+
+  messages    Message[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  threadId    String
+  thread      MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  senderId    String
+  sender      User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content     String
+  isAudio     Boolean  @default(false)
+  audioUrl    String?
+  annotation  String?  // JSON: highlighted text reference or code range
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+// ═══════════════════════════════════════════════════════
+// CERTIFICATIONS
+// ═══════════════════════════════════════════════════════
+
+model Certificate {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId     String?
+  title       String
+  issuedAt    DateTime @default(now())
+  pdfUrl      String?
+  qrCodeToken String   @unique // Unique verification token
+  score       Float?
+}
+
+// ═══════════════════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════════════════
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  title       String
+  body        String?
+  link        String?          // Deep link to relevant page
+  isRead      Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+}
+
+// ═══════════════════════════════════════════════════════
+// ADMIN — ACTIVITY LOGS
+// ═══════════════════════════════════════════════════════
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action      String   // e.g. "ENROLLED", "SUBMITTED_PROJECT", "COMPLETED_LESSON"
+  entityType  String?  // e.g. "Course", "Project", "Lesson"
+  entityId    String?
+  metadata    String?  // JSON blob for extra context
+  createdAt   DateTime @default(now())
+}

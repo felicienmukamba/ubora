@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "UBORA - AI Development Agency",
-  description: "Premium AI development agency building systems that convert.",
+  title: "Kladriva Academy — Plateforme d'apprentissage immersive",
+  description: "Maîtrisez les technologies modernes avec un mentorat personnalisé, des cours immersifs et des certifications reconnues.",
 };
 
 export default function RootLayout({
@@ -25,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="fr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
