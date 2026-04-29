@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KLADRIVA - AI Development Agency",
+  title: "UBORA - AI Development Agency",
   description: "Premium AI development agency building systems that convert.",
 };
 

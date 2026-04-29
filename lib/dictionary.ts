@@ -24,7 +24,7 @@ const english = {
     nextLabel: "Next slide",
     slides: [
       {
-        eyebrow: "KLADRIVA Intelligence",
+        eyebrow: "UBORA Intelligence",
         title: "AI that earns its place in your business.",
         subtitle: "Custom systems engineered for measurable outcomes — not just impressive demos.",
         primaryCta: "Start your project",
@@ -103,14 +103,14 @@ const english = {
     description: "Premium AI development agency building systems that convert.",
     newsletter: { title: "Stay updated", placeholder: "Enter your email", button: "Subscribe" },
     links: { company: "Company", services: "Services", legal: "Legal" },
-    copyright: "© 2026 KLADRIVA. All rights reserved."
+    copyright: "© 2026 UBORA. All rights reserved."
   },
   about: {
     title: "About us",
     vision: { title: "Our vision", content: "We believe AI is not just a technology—it's a transformative force that reshapes how businesses operate, compete, and grow. Our vision is to make enterprise-grade AI accessible, practical, and profitable for companies ready to embrace the future." },
     mission: { title: "Our mission", content: "To deliver AI solutions that don't just impress technically—they deliver measurable business outcomes. We bridge the gap between cutting-edge AI research and real-world application." },
     keyPoints: {
-      title: "Why KLADRIVA",
+      title: "Why UBORA",
       items: [
         { title: "Results-first", description: "Every AI system we build is designed with clear KPIs and ROI targets." },
         { title: "Scalable architecture", description: "Our solutions grow with your business, handling increased load seamlessly." },
@@ -140,7 +140,7 @@ const english = {
       { title: "Agility", description: "We adapt quickly to changing requirements and technologies." },
       { title: "Impact", description: "We measure success by the results we deliver to your business." }
     ],
-    quote: { text: "The best AI is invisible—it's the silent engine that powers extraordinary outcomes.", author: "KLADRIVA" },
+    quote: { text: "The best AI is invisible—it's the silent engine that powers extraordinary outcomes.", author: "UBORA" },
     practices: {
       title: "Our practices",
       items: ["Continuous learning and adaptation", "Cross-functional collaboration", "Data-driven decision making", "Agile development methodology", "Regular client feedback loops", "Post-deployment support"]
@@ -173,7 +173,7 @@ const french = {
     nextLabel: "Diapositive suivante",
     slides: [
       {
-        eyebrow: "KLADRIVA Intelligence",
+        eyebrow: "UBORA Intelligence",
         title: "Une IA qui mérite sa place dans votre entreprise.",
         subtitle: "Des systèmes sur mesure conçus pour des résultats mesurables — pas de simples démos.",
         primaryCta: "Démarrer votre projet",
@@ -217,7 +217,7 @@ const french = {
   metrics: { title: "Résultats prouvés", projects: { value: "120+", label: "Projets livrés" }, satisfaction: { value: "98%", label: "Satisfaction client" }, conversion: { value: "3x", label: "Augmentation moyenne de conversion" } },
   capabilities: { title: "Ce que nous faisons", subtitle: "Solutions IA complètes pour les entreprises visionnaires", items: english.capabilities.items },
   cta: { title: "Prêt à transformer votre entreprise?", subtitle: "Discutons de comment l'IA peut stimuler votre croissance.", button: "Commencer" },
-  footer: { description: "Agence premium de développement IA construisant des systèmes qui convertissent.", newsletter: { title: "Restez informé", placeholder: "Entrez votre email", button: "S'abonner" }, links: { company: "Entreprise", services: "Services", legal: "Légal" }, copyright: "© 2026 KLADRIVA. Tous droits réservés." },
+  footer: { description: "Agence premium de développement IA construisant des systèmes qui convertissent.", newsletter: { title: "Restez informé", placeholder: "Entrez votre email", button: "S'abonner" }, links: { company: "Entreprise", services: "Services", legal: "Légal" }, copyright: "© 2026 UBORA. Tous droits réservés." },
   about: { title: "À propos", vision: { title: "Notre vision", content: "Nous croyons que l'IA n'est pas seulement une technologie—c'est une force transformative qui redéfinit comment les entreprises opèrent, compétitionnent et grandissent. Notre vision est de rendre l'IA de niveau entreprise accessible, pratique et rentable pour les entreprises prêtes à embrasser l'avenir." }, mission: { title: "Notre mission", content: "Délivrer des solutions IA qui ne sont pas seulement impressionnantes techniquement—elles produisent des résultats métier mesurables. Nous comblons le fossé entre la recherche IA de pointe et l'application réelle." }, keyPoints: english.about.keyPoints, team: english.about.team },
   activities: { title: "Nos activités", subtitle: "Solutions IA complètes adaptées à vos besoins", cta: "Discuter de votre projet" },
   values: { title: "Nos valeurs", subtitle: "Les principes qui guident tout ce que nous faisons", coreValues: english.values.coreValues, quote: english.values.quote, practices: english.values.practices },

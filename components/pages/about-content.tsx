@@ -61,7 +61,7 @@ export function AboutContent({ dict, locale }: AboutPageProps) {
                 {dict.about.vision.content}
               </p>
             </motion.div>
-            
+
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -92,7 +92,7 @@ export function AboutContent({ dict, locale }: AboutPageProps) {
             className="mb-16 md:mb-24"
           >
             <div className="text-[12px] md:text-[13px] font-medium tracking-[0.22em] uppercase mb-4 text-neutral-500">
-              Why KLADRIVA
+              Why UBORA
             </div>
             <h2 className="text-3xl md:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] text-neutral-900">
               {dict.about.keyPoints.title}
@@ -158,7 +158,7 @@ export function AboutContent({ dict, locale }: AboutPageProps) {
                 className="group p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
               >
                 <div className="h-1 bg-white/10 rounded-full mb-8 overflow-hidden">
-                  <motion.div 
+                  <motion.div
                     initial={{ scaleX: 0 }}
                     whileInView={{ scaleX: 1 }}
                     viewport={{ once: true }}
@@ -198,4 +198,4 @@ export function AboutContent({ dict, locale }: AboutPageProps) {
       </section>
     </main>
   );
-}
+}

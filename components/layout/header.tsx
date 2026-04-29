@@ -55,7 +55,7 @@ export function Header({ dict, locale }: HeaderProps) {
         <Link
           href={`/${locale}`}
           className="flex items-center gap-2 group"
-          aria-label="KLADRIVA"
+          aria-label="UBORA"
         >
           <Image
             src="/logo.png"
@@ -63,7 +63,7 @@ export function Header({ dict, locale }: HeaderProps) {
             width={24}
             height={24}
             priority
-            className="w-20 h-20 object-contain transition-opacity group-hover:opacity-80"
+            className="w-32"
           />
         </Link>
 
@@ -123,7 +123,7 @@ export function Header({ dict, locale }: HeaderProps) {
                 className="h-6 w-6 object-contain"
               />
               <span className="text-[13px] font-medium tracking-[0.18em]">
-                KLADRIVA
+                UBORA
               </span>
             </div>
             <nav className="flex flex-col gap-1 mt-8">

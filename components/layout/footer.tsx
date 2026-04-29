@@ -25,7 +25,7 @@ export function Footer({ dict, locale }: FooterProps) {
                 alt=""
                 width={28}
                 height={28}
-                className="w-20 h-20 object-contain transition-opacity group-hover:opacity-80 invert"
+                className="w-32"
               />
             </Link>
             <p className="mt-6 text-base text-white/50 max-w-sm leading-relaxed">
@@ -81,7 +81,7 @@ export function Footer({ dict, locale }: FooterProps) {
 
         <div className="mt-20 pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-[13px] text-white/30 font-medium">
-            {currentYear} KLADRIVA. Intelligence Built for Outcomes.
+            {currentYear} UBORA. Intelligence Built for Outcomes.
           </p>
           <div className="flex items-center gap-8 text-[13px] text-white/30 font-medium">
             <Link href="#" className="hover:text-white transition-colors">LinkedIn</Link>
